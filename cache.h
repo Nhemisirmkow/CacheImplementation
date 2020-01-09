@@ -24,10 +24,8 @@ private:
   // when clearing this queue we will do at most N number of operations, where
   // N is the number of calls of get/put.
   std::queue<K> callQueue;
-  // timer describes number of the operation (starting from 1, we assume There
-  // will be less than 10^9 operations)
   // maxSize describes the maximal size of the Cache (kept items).
-  int timer, maxSize;
+  int maxSize;
   // This operation is amortized by the number of calls, thus O(1) in the end.
   void makeCleanUp();
 

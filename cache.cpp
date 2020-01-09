@@ -4,7 +4,6 @@ template <typename K, typename V>
 Cache<K, V>::Cache(int maxSize) {
     this->m = std::unordered_map<K, CacheValue<V>>();
     this->callQueue = std::queue<K>();
-    this->timer = 1;
     this->maxSize = maxSize;
 }
 

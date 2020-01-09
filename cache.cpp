@@ -1,9 +1,14 @@
 #include "cache.h"
+#include <cassert>
+
+#define assertm(exp, msg) assert(((void)msg, exp))
 
 template <typename K, typename V>
 Cache<K, V>::Cache(int maxSize) {
+    assertm(maxSize < memoryLimit / maxSizeMultiplier,
+            "maxSize of the Cache multiplied by maxSizeMultiplier constant must be lower than memoryLimit constant");
     this->m = std::unordered_map<K, CacheValue<V>>();
-    this->callQueue = std::queue<K>();
+    this->callList = std::list<K>();
     this->maxSize = maxSize;
 }
 
@@ -14,9 +19,9 @@ Cache<K, V>::Cache(int maxSize) {
 // many get/put calls we had -- amortized complexity.
 template <typename K, typename V>
 void Cache<K, V>::makeCleanUp() {
-  while (!callQueue.empty()) {
-    K oldKey = callQueue.front();
-    callQueue.pop();
+  while (!callList.empty()) {
+    K oldKey = *(callList.begin());
+    callList.pop_front();
     auto el = &m[oldKey];
     el->touchQueueCounter--;
     if (el->touchQueueCounter == 0) {
@@ -26,13 +31,31 @@ void Cache<K, V>::makeCleanUp() {
   }
 }
 
+template <typename K, typename V>
+void Cache<K, V>::performOrdinaryCleanUp() {
+  if (callList.size() >= memoryLimit - 1) {
+    auto it = callList.begin();
+    auto itTemp = it;
+    while (it != callList.end()) {
+      itTemp = it++;
+      auto el = &m[*itTemp];
+      if (el->touchQueueCounter > 1) {
+        el->touchQueueCounter--;
+        callList.erase(itTemp);
+      }
+    }
+  }
+}
+
 // Here we first check if key exists -- if yes, we add operation to the queue
 // and then we add number of calls for the key and return the value.
 // If key not found -- return default constructor.
 template <typename K, typename V>
 V Cache<K, V>::get(K key) {
+  performOrdinaryCleanUp();
+
   if (m.find(key) != m.end()) {
-    callQueue.push(key);
+    callList.push_back(key);
 
     auto el = &m[key];
     el->touchQueueCounter++;
@@ -50,7 +73,8 @@ V Cache<K, V>::get(K key) {
 // we erase unnecessary calls until one of the values is completely forgotten.
 template <typename K, typename V>
 void Cache<K, V>::put(K key, V val) {
-  callQueue.push(key);
+  performOrdinaryCleanUp();
+  callList.push_back(key);
 
   if (m.find(key) != m.end()) {
     auto el = &m[key];
@@ -68,4 +92,9 @@ void Cache<K, V>::put(K key, V val) {
 
     m[key] = el;
   }
+}
+
+template <typename K, typename V>
+int Cache<K, V>::callListSize() {
+  return (int) callList.size();
 }

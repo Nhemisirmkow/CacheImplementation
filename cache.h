@@ -1,0 +1,41 @@
+#ifndef CACHE_H
+#define CACHE_H
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+// Helping structure that keeps the info about the value of the key and
+// touchQueueCounter which says how many entries are in queue inside Cache
+// with a given key.
+template<typename V>
+struct CacheValue{
+  int touchQueueCounter;
+  V val;
+};
+
+template<typename K, typename V>
+class Cache{
+private:
+  // Here we keep all keys -- put/get/erase/find into this map is constant O(1)
+  std::unordered_map<K, CacheValue<V>> m;
+  // This queue keeps info about get/put entries -- time complexity is amortized
+  // when we put or get -- we add additional operation in the future.
+  // when clearing this queue we will do at most N number of operations, where
+  // N is the number of calls of get/put.
+  std::queue<K> callQueue;
+  // timer describes number of the operation (starting from 1, we assume There
+  // will be less than 10^9 operations)
+  // maxSize describes the maximal size of the Cache (kept items).
+  int timer, maxSize;
+  // This operation is amortized by the number of calls, thus O(1) in the end.
+  void makeCleanUp();
+
+public:
+  Cache(int maxSize);
+
+  void put(K key, V value);
+  V get(K key);
+};
+
+#endif

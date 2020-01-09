@@ -11,4 +11,5 @@ Given implementation has O(1) time complexity for put and get functions and O(n)
 
 
 To be added:
-more tests wrapped in some class (with assertions).
+1. more tests wrapped in some class (with assertions).
+2. Change for memory improvement: callQueue will be changed to callList. When we add get/put call we add it to the right side (end) and when we erase -- we erase from the left side (begin). When the memory capacity (to be defined) is reached then we perform ordinary cleanup -- we proceed from the left side (begin) to right side (end) and erase all the entries that are not last in the list (with lowering the touchQueueCounter number). This way we control the memory taken and perform at most N additional unnecessary operations (we skip last entries to ensure the order of calling time is unchanged). After Ordinary cleanup there would be exactly N entries left, where N is the maxSize of Cache. Time "wasted" with this operation is amortized by the fact that we keep in mind that every call we save we will have to erase exactly once, so amortzed time is constant.
